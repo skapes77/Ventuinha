@@ -1,0 +1,140 @@
+#include <WiFi.h>
+#include "PubSubClient.h"
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 64
+#define PIN_TRIG 23
+#define PIN_ECHO 19
+
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, & Wire, -1);
+
+const char* ssid = "MotoE6";
+const char* password = "12345678987654321";
+const char* mqttServer = "broker.hivemq.com";
+int port = 1883;
+String stMac;
+char mac[50];
+char clientId[50];
+
+WiFiClient espClient;
+PubSubClient client(espClient);
+
+const int ledPin = 2;
+int LB = 23;
+int LV = 19;
+int Ps = 32;
+int temp = 24;
+
+void setup() {
+  pinMode(LB, OUTPUT);
+  pinMode(LV, OUTPUT);
+  pinMode(Ps, INPUT);
+  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
+    Serial.println(F("SSD1306 allocation failed"));
+    for (;;);
+  }
+  display.clearDisplay();
+  display.display();
+  Serial.begin(115200);
+  randomSeed(analogRead(0));
+
+  delay(10);
+  Serial.println();
+  Serial.print("Connecting to ");
+  Serial.println(ssid);
+
+  wifiConnect();
+
+  Serial.println("");
+  Serial.println("WiFi connected");
+  Serial.println("IP address: ");
+  Serial.println(WiFi.localIP());
+  Serial.println(WiFi.macAddress());
+  stMac = WiFi.macAddress();
+  stMac.replace(":", "_");
+  Serial.println(stMac);
+  
+  client.setServer(mqttServer, port);
+  client.setCallback(callback);
+  pinMode(ledPin, OUTPUT);
+}
+
+void wifiConnect() {
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+}
+void mqttReconnect() {
+  while (!client.connected()) {
+    Serial.print("Attempting MQTT connection...");
+    long r = random(1000);
+    sprintf(clientId, "clientId-%ld", r);
+    if (client.connect(clientId)) {
+      Serial.print(clientId);
+      Serial.println(" connected");
+      client.subscribe("temp");
+      client.subscribe("vent");
+    } else {
+      Serial.print("failed, rc=");
+      Serial.print(client.state());
+      Serial.println(" try again in 5 seconds");
+      delay(5000);
+    }
+  }
+}
+
+void callback(char* topic, byte* message, unsigned int length) {
+  String stMessage;
+  
+  for (int i = 0; i < length; i++) {
+    stMessage += (char)message[i];
+  }
+  if (String(topic) == "vent") {
+    if(stMessage == "on"){
+      digitalWrite(LB, HIGH);
+      digitalWrite(LV, HIGH);
+      displayReset(0,30);
+      display.print("Status Ventilado:ON");
+      display.display();
+    }
+    else if(stMessage == "off"){
+      digitalWrite(LB, LOW);
+      digitalWrite(LV, LOW);
+      displayReset(0,30);
+      display.print("Status Ventilador:OFF");
+      display.display();
+    }
+  }
+  if (String(topic) == "temp") {
+    temp = stMessage.toInt();
+    if (temp >= 38){
+      client.publish("vent", "on");
+    }
+    else {
+      client.publish("vent", "off");
+    }
+  }
+}
+
+void loop() {
+  delay(10);
+  if (!client.connected()) {
+    mqttReconnect();
+  }
+  client.loop();
+
+  displayReset(0,0);
+  display.print("Temperatura:");
+  display.println(temp);
+  display.display();
+}
+void displayReset(int x, int y ) {
+  display.fillRect(x, y, 128, 8, BLACK);
+  display.setTextColor(WHITE);
+  display.setCursor(x,y);
+}
