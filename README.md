@@ -1,7 +1,7 @@
 # Trabalho MCR - MQTT ESP32 2022
 Trabalho 4º BIM 2022 MCR 
 
-Alunos: Arthur Zana Côrtes e Eduardo Morilho Moreira
+Alunos: Arthur Zana Côrtes, Eduardo Morilho Moreira e Giovani Verissimo Pereira
 
 O trabalho realizado tem a função de exemplificar a programação e montagem de uma ventoinha automátizada, funcionando com um sensor (simulado ao inserir o valor da temperatura no MQTT) que ao detectar temperatura elevada aciona a ventoinha para resfriar o dispositivo, além de um LED que se aciona em conjunto com a ventoinha.
 
