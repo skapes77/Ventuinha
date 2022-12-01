@@ -18,3 +18,6 @@ No lado direito, a representação do estado atual da ventoinha (desligada), no 
 ![image](https://user-images.githubusercontent.com/119462023/204694570-4642101b-50ec-4c3d-9bd3-3fd447be13d4.png)
 
 Representação do estado da ventoinha (ligada) após superar os 38ºC necessários para ativação
+
+![image](https://user-images.githubusercontent.com/119462023/205082485-d8697884-c849-4d7e-b161-c6b8fcae7430.png)
+Demonstração do projeto físico funcionando
